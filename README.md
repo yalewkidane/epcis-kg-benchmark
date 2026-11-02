@@ -24,7 +24,7 @@ evaluation/
 | ID | Name | System | What is exercised | Script (k6 / nGrinder) |
 |---|---|---|---|---|
 | **E1** | Simple push | EPCIS alone | `POST /capture` with one document per request (`SYNC=true`: `POST /events` with one event) | `epcis-capture.js` / `EpcisCapture.groovy` |
-| **E1-max** | Maximal event push | EPCIS alone | `POST /capture` of one generated ObjectEvent with every standard field populated (quantities, business transactions, sources/destinations, two sensor elements with all report forms, ILMD, persistent disposition, certification, extensions; about 5 KB), identifiers never repeat; the worst-case capture cost. `SYNC=true`: the same event to `POST /events`, stored before the answer | `EpcisCaptureMax.groovy` |
+| **E1-max** | Maximal event push | EPCIS alone | `POST /capture` of one generated ObjectEvent with every standard field populated (quantities, business transactions, sources/destinations, two sensor elements with all report forms, ILMD, persistent disposition, certification, extensions; about 5 KB), identifiers never repeat; the worst-case capture cost. Default `SYNC=true`: `POST /events`, stored before the answer (the certified test item); `SYNC=false`: the event wrapped in a document to `POST /capture` | `EpcisCaptureMax.groovy` |
 | **E2** | Simple get | EPCIS alone | `GET /events` with one parameter: by identifier (`QUERY=byEpc`), latest events (`latest`), by event type (`byType`) | `epcis-get.js` / `EpcisGet.groovy` |
 | **E3** | Traceability query | EPCIS alone | the *chain* of `GET /events` calls needed to collect everything about an item through its re-identifications (packing, transformation), at depth 0 / 1 / 2 | `epcis-trace.js` / `EpcisTrace.groovy` |
 | **E4** | KG capture | Knowledge graph alone | `POST /traceability/ingest` with one document per request (synchronous graph write; `QUEUE=true` for the queued path) | `kg-capture.js` / `KgCapture.groovy` |
@@ -129,6 +129,13 @@ same host with 50 users: `MATCH_anyEPC` went from 720 req/s (1 process, no index
   events (1 ms), but it grows linearly with the dataset and already cost 1.7 Mongo cores
   at 720 req/s. Decide whether the *implementation as shipped* or an indexed variant is the
   system under test, and say which.
+- **Vocabulary upserts without an index.** Every captured event is also upserted into small
+  vocabulary collections (`epcs`, `readPoints`, ...) with a filter on an unindexed field, so
+  each upsert is a collection scan that gets slower with every event captured. With 17 k
+  entries in `epcs`, 50 users on `POST /events` cost Mongo 3 cores for 300 TPS; after a few
+  3-minute capture runs the same test fell to 40 TPS. An index on `epcs.epc` cut Mongo to
+  0.4 cores at the same TPS (image 2.1: `MONGODB_VOCABULARY_INDEXES`). Capture numbers that
+  fall during a run point at this kind of hidden O(n) side write.
 - **Per-request logging.** The query path writes several `console.log` lines per request
   (not controlled by `ENABLE_LOGS`) and re-validates the query schema each time. Both are
   CPU on the measured path.

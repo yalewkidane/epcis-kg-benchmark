@@ -1,7 +1,8 @@
 /**
  * E1-max – EPCIS capture of a MAXIMAL ObjectEvent (EPCIS alone, no resources needed).
  *
- * One test = one POST /capture of a generated EPCISDocument holding ONE ObjectEvent in
+ * One test = one capture of a generated ObjectEvent (SYNC = true, default: POST /events of
+ * the single event; SYNC = false: POST /capture of an EPCISDocument holding it) in
  * which every field the EPCIS 2.0 standard allows on an ObjectEvent is present:
  *   eventID, certificationInfo, eventTime, eventTimeZoneOffset, action, bizStep,
  *   disposition, persistentDisposition, epcList, quantityList, readPoint, bizLocation,
@@ -10,9 +11,10 @@
  *   exception), ilmd, and user extensions (flat, nested, list).
  * Identifiers and event IDs never repeat: they carry a token unique per test and per run.
  *
- * SYNC = true sends the same event to POST /events instead: the synchronous single-event
- * capture interface, where the repository validates, stores and publishes the event before
- * answering (success = 2xx), so the measured time includes the database write.
+ * With SYNC = true (default) the event goes to POST /events, the synchronous single-event
+ * capture interface: the repository validates, stores and publishes the event before
+ * answering (success = 2xx), so the measured time includes the database write. SYNC = false
+ * wraps it in an EPCISDocument for POST /capture, which answers 202 before the write.
  *
  * Compare its TPS with EpcisCapture.groovy (a plain document) to see what full validation
  * and storage of a rich event cost. EPCS sets the number of items in epcList.
@@ -37,9 +39,10 @@ import groovy.json.JsonOutput
 class EpcisCaptureMax {
 
     static final String EPCIS_URL = "http://localhost:7080/epcis/v2"
-    // false: POST /capture of a document (asynchronous, 202)
-    // true:  POST /events of the single event (synchronous: validated, stored and published before the answer)
-    static final boolean SYNC = false
+    // true (default, the certified test item): POST /events of the single event, synchronous –
+    //       validated, stored and published before the answer, so the time includes the write
+    // false: POST /capture of a document (asynchronous, 202 before the write)
+    static final boolean SYNC = true
     // Items in epcList of the event (each one a unique SGTIN)
     static final int EPCS = 3
 
