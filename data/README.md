@@ -11,7 +11,7 @@ node generate-dataset.js --products 2000 --depth 2
 node generate-dataset.js --products 2000 --depth 2 --kind transformation
 ```
 
-Output goes to `generated/<kind>-depth<d>/` (git-ignored):
+Output goes to `generated/<kind>-depth<d>/` (the depth-0 and depth-2 reference sets are committed):
 
 - `documents.json` — one EPCISDocument per product, ready for `POST /capture`
 - `ids.json` — the root item identifier of every product; load scripts sample from it
