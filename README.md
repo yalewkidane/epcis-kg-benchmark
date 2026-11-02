@@ -24,7 +24,7 @@ evaluation/
 | ID | Name | System | What is exercised | Script (k6 / nGrinder) |
 |---|---|---|---|---|
 | **E1** | Simple push | EPCIS alone | `POST /capture` with one document per request (`SYNC=true`: `POST /events` with one event) | `epcis-capture.js` / `EpcisCapture.groovy` |
-| **E1-max** | Maximal event push | EPCIS alone | `POST /capture` of one generated ObjectEvent with every standard field populated (quantities, business transactions, sources/destinations, two sensor elements with all report forms, ILMD, persistent disposition, certification, extensions; about 5 KB), identifiers never repeat; the worst-case capture cost | `EpcisCaptureMax.groovy` |
+| **E1-max** | Maximal event push | EPCIS alone | `POST /capture` of one generated ObjectEvent with every standard field populated (quantities, business transactions, sources/destinations, two sensor elements with all report forms, ILMD, persistent disposition, certification, extensions; about 5 KB), identifiers never repeat; the worst-case capture cost. `SYNC=true`: the same event to `POST /events`, stored before the answer | `EpcisCaptureMax.groovy` |
 | **E2** | Simple get | EPCIS alone | `GET /events` with one parameter: by identifier (`QUERY=byEpc`), latest events (`latest`), by event type (`byType`) | `epcis-get.js` / `EpcisGet.groovy` |
 | **E3** | Traceability query | EPCIS alone | the *chain* of `GET /events` calls needed to collect everything about an item through its re-identifications (packing, transformation), at depth 0 / 1 / 2 | `epcis-trace.js` / `EpcisTrace.groovy` |
 | **E4** | KG capture | Knowledge graph alone | `POST /traceability/ingest` with one document per request (synchronous graph write; `QUEUE=true` for the queued path) | `kg-capture.js` / `KgCapture.groovy` |

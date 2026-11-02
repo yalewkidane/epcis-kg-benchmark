@@ -10,6 +10,10 @@
  *   exception), ilmd, and user extensions (flat, nested, list).
  * Identifiers and event IDs never repeat: they carry a token unique per test and per run.
  *
+ * SYNC = true sends the same event to POST /events instead: the synchronous single-event
+ * capture interface, where the repository validates, stores and publishes the event before
+ * answering (success = 2xx), so the measured time includes the database write.
+ *
  * Compare its TPS with EpcisCapture.groovy (a plain document) to see what full validation
  * and storage of a rich event cost. EPCS sets the number of items in epcList.
  * The repository stores every document, so reset DATA_DIR between repetitions.
@@ -33,6 +37,9 @@ import groovy.json.JsonOutput
 class EpcisCaptureMax {
 
     static final String EPCIS_URL = "http://localhost:7080/epcis/v2"
+    // false: POST /capture of a document (asynchronous, 202)
+    // true:  POST /events of the single event (synchronous: validated, stored and published before the answer)
+    static final boolean SYNC = false
     // Items in epcList of the event (each one a unique SGTIN)
     static final int EPCS = 3
 
@@ -48,13 +55,14 @@ class EpcisCaptureMax {
     @BeforeProcess
     public static void beforeProcess() {
         HTTPRequestControl.setConnectionTimeout(30000)
-        test = new GTest(1, "POST /capture (maximal ObjectEvent)")
+        test = new GTest(1, SYNC ? "POST /events (maximal ObjectEvent)" : "POST /capture (maximal ObjectEvent)")
         request = new HTTPRequest()
         headers = ["Content-Type": "application/json", "Accept": "application/json",
                    "GS1-EPCIS-Version": "2.0.0", "GS1-EPCIS-Max": "2.0.0", "GS1-EPCIS-Min": "2.0.0",
                    "GS1-CBV-Version": "2.0.0", "GS1-CBV-Max": "2.0.0", "GS1-CBV-Min": "2.0.0"]
-        int bytes = JsonOutput.toJson(maximalDocument("sample")).bytes.length
-        grinder.logger.info("maximal ObjectEvent document: {} EPCs, {} bytes, salt {}", EPCS, bytes, runSalt)
+        int bytes = JsonOutput.toJson(SYNC ? maximalEvent("sample") : maximalDocument("sample")).bytes.length
+        grinder.logger.info("maximal ObjectEvent {}: {} EPCs, {} bytes, salt {}",
+                SYNC ? "event (POST /events)" : "document (POST /capture)", EPCS, bytes, runSalt)
     }
 
     @BeforeThread
@@ -161,20 +169,34 @@ class EpcisCaptureMax {
         ]
     }
 
-    /** A maximal EPCISDocument with one ObjectEvent whose identifiers never repeat. */
+    static final List CONTEXT = ["https://ref.gs1.org/standards/epcis/2.0.0/epcis-context.jsonld", [example: EX]]
+
+    /** A maximal EPCISDocument with one ObjectEvent whose identifiers never repeat (POST /capture). */
     static Map maximalDocument(String token) {
         String now = isoNow()
-        return ["@context": ["https://ref.gs1.org/standards/epcis/2.0.0/epcis-context.jsonld", [example: EX]],
+        return ["@context": CONTEXT,
                 id: EX + "document/" + token,
                 type: "EPCISDocument", schemaVersion: "2.0", creationDate: now,
                 epcisHeader: ["example:documentNote": "benchmark document " + token],
                 epcisBody: [eventList: [maximalObjectEvent(token, now)]]]
     }
 
+    /** The same ObjectEvent as a single event with its @context (POST /events). */
+    static Map maximalEvent(String token) {
+        Map event = ["@context": CONTEXT]
+        event.putAll(maximalObjectEvent(token, isoNow()))
+        return event
+    }
+
     @Test
     public void test() {
-        def doc = maximalDocument(uniqueToken())
-        HTTPResponse response = request.POST(EPCIS_URL + "/capture", JsonOutput.toJson(doc).bytes)
+        String token = uniqueToken()
+        HTTPResponse response
+        if (SYNC) {
+            response = request.POST(EPCIS_URL + "/events", JsonOutput.toJson(maximalEvent(token)).bytes)
+        } else {
+            response = request.POST(EPCIS_URL + "/capture", JsonOutput.toJson(maximalDocument(token)).bytes)
+        }
         if (response.statusCode >= 300) {
             grinder.logger.warn("capture failed: {} {}", response.statusCode, response.getBodyText()?.take(300))
         }
