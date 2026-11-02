@@ -1,0 +1,58 @@
+# nGrinder controller + one agent, with persistent state.
+#
+# Everything the controller stores lives under /opt/ngrinder-controller: users, scripts and
+# their resources (repos/, script/), test history and reports (db/, perftest/), plugins and
+# settings. The agent keeps its downloaded binary, agent.conf and logs under
+# /opt/ngrinder-agent. Both are bind-mounted from NGRINDER_DATA_DIR (default ./data), so
+# `docker compose down`, a reboot or an image update keeps every test and report.
+#
+#   cp .env.example .env          # optional: web port, data directory, image tag
+#   docker compose up -d
+#   open http://localhost:8080 (admin / admin); admin -> Agent Management -> approve the agent
+#
+# Backup = copy NGRINDER_DATA_DIR while the controller is stopped (files are written by root).
+# Migrating from the plain `docker run` containers: see README.md, "Setup".
+
+services:
+  controller:
+    image: ngrinder/controller:${NGRINDER_IMAGE_TAG:-latest}
+    container_name: ngrinder-controller
+    restart: unless-stopped
+    ports:
+      - "${NGRINDER_WEB_PORT:-8080}:80"           # web UI; the agent downloads itself from here
+      - "16001:16001"                             # agent -> controller
+      - "12000-12009:12000-12009"                 # console ports, one per concurrently running test
+    volumes:
+      - ${NGRINDER_DATA_DIR:-./data}/controller:/opt/ngrinder-controller
+    healthcheck:
+      # the first start extracts the war and takes a minute or two
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:80/login || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 40
+      start_period: 90s
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "5"
+
+  agent:
+    image: ngrinder/agent:${NGRINDER_IMAGE_TAG:-latest}
+    container_name: ngrinder-agent
+    restart: unless-stopped
+    # host network: the agent reaches the systems under test exactly as the host does
+    # (EPCIS_URL / KG_URL in the scripts are host addresses, e.g. http://localhost:7080)
+    network_mode: host
+    # controller address as seen from the agent (host network -> the published web port)
+    command: ["${NGRINDER_CONTROLLER_HOST:-127.0.0.1}:${NGRINDER_WEB_PORT:-8080}"]
+    depends_on:
+      controller:
+        condition: service_healthy
+    volumes:
+      - ${NGRINDER_DATA_DIR:-./data}/agent:/opt/ngrinder-agent
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "5"

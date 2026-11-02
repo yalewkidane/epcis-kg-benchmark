@@ -14,7 +14,8 @@ evaluation/
   README.md            methodology, metrics, experiments, procedure
   data/                synthetic dataset generator (products at lineage depth 0, 1, 2)
   k6/                  k6 scripts, one per experiment (open or closed load model)
-  ngrinder/            nGrinder scripts, one per experiment (closed model, distributed agents)
+  ngrinder/            nGrinder scripts, one per experiment (closed model, distributed agents),
+                       and a compose file for a controller + agent with persistent state
   scripts/             helpers: result tables, capture-to-graph lag probe
   results/             raw outputs per run + report template (not versioned)
 ```

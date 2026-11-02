@@ -6,10 +6,47 @@ percentiles and requests-per-test are logged, not charted.
 
 ## Setup
 
+`docker-compose.yml` in this folder starts the controller and one agent and keeps their
+state on the host, so scripts, test history and reports survive `docker compose down`,
+reboots and image updates:
+
 ```sh
-docker run -d --name ngrinder-controller -p 8080:80 -p 16001:16001 -p 12000-12009:12000-12009 ngrinder/controller
+cd epcis-kg-benchmark/ngrinder
+cp .env.example .env                 # optional: web port, data directory, image tag
+docker compose up -d                 # first start takes a minute or two (the controller extracts its war)
+docker compose ps                    # controller "healthy", agent "running"
+```
+
+The controller writes everything to `data/controller/` (`db/` = users and test history,
+`perftest/` = reports and logs, `repos/` + `script/` = scripts and resources) and the agent
+to `data/agent/`; both directories are in `.gitignore`. Back up by copying `data/` while the
+stack is stopped (`docker compose stop`); the files are owned by root. `docker compose down`
+keeps the data, deleting `data/` resets nGrinder to a fresh install. The agent runs with the
+host network, so `EPCIS_URL` / `KG_URL` in the scripts are host addresses. If you move the
+controller to another port or host, delete `data/agent/` so the agent downloads itself again
+with the new address.
+
+**Already running from `docker run`?** The plain containers keep their state in anonymous
+volumes that disappear when the container is removed. Move it into the compose stack once:
+
+```sh
+cd epcis-kg-benchmark/ngrinder
+docker stop ngrinder-agent ngrinder-controller
+mkdir -p data
+docker cp ngrinder-controller:/opt/ngrinder-controller data/controller
+docker cp ngrinder-agent:/opt/ngrinder-agent data/agent
+docker rm ngrinder-agent ngrinder-controller
+docker compose up -d                 # same names, same ports, old tests and reports present
+docker volume prune                  # optional: removes the now unused anonymous volumes
+```
+
+Without compose, the equivalent commands are:
+
+```sh
+docker run -d --name ngrinder-controller -p 8080:80 -p 16001:16001 -p 12000-12009:12000-12009 \
+  -v "$PWD/data/controller:/opt/ngrinder-controller" ngrinder/controller
 # the agent downloads itself from the controller's WEB port as published on the host (8080 here)
-docker run -d --name ngrinder-agent --network host ngrinder/agent 127.0.0.1:8080
+docker run -d --name ngrinder-agent --network host -v "$PWD/data/agent:/opt/ngrinder-agent" ngrinder/agent 127.0.0.1:8080
 ```
 
 Open http://localhost:8080 (admin / admin). Under *admin → Agent Management* the agent must
@@ -54,13 +91,14 @@ runs without the `resources` folder, so the capture scripts log `no documents.js
 and fall back to one synthetic event; the real run distributes the resources. Check the first
 lines of the run log for `loaded 30 documents`.
 
-**Asynchronous or synchronous capture (`SYNC`).** `EpcisCapture.groovy` and
-`EpcisCaptureMax.groovy` default to `POST /capture`: the repository validates the document,
-queues it and answers 202 before the database write, so the measured time is parsing,
-validation and queuing. With `SYNC = true` they send the single event to `POST /events`,
-where the repository validates, stores and publishes it (MQTT, stream subscriptions) before
-answering, so the measured time includes the write. The two numbers measure different
-interfaces; label them `capture (async)` and `events (sync)`.
+**Asynchronous or synchronous capture (`SYNC`).** With `SYNC = false` the capture scripts
+send a document to `POST /capture`: the repository validates it, queues it and answers 202
+before the database write, so the measured time is parsing, validation and queuing. With
+`SYNC = true` they send the single event to `POST /events`, where the repository validates,
+stores and publishes it (MQTT, stream subscriptions) before answering, so the measured time
+includes the write. `EpcisCapture.groovy` defaults to `false`, `EpcisCaptureMax.groovy` to
+`true` (the certified test item). The two numbers measure different interfaces; label them
+`capture (async)` and `events (sync)`.
 
 **Capture means new data (`UNIQUE = true`, the default).** `EpcisCapture.groovy` and
 `KgCapture.groovy` rewrite every document before sending it: the serial of each SGTIN and
