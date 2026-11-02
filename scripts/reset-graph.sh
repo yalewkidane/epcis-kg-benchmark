@@ -15,9 +15,18 @@ TRACE_SRC="${TRACE_SRC:-../../traceability/src}"
 SCENARIOS=true
 [[ "${1:-}" == "--no-scenarios" ]] && SCENARIOS=false
 
-before=$(curl -sf "$KG_URL/traceability/stats" | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d["nodes"]["events"])')
+health=$(curl -s -m 10 -o /dev/null -w '%{http_code}' "$KG_URL/health" || true)
+if [[ "$health" != "200" ]]; then
+  echo "graph service not reachable at $KG_URL (GET /health -> ${health:-no answer})." >&2
+  echo "Check 'docker compose ps' in traceability/, the TRACEABILITY_PORT in its .env, or set KG_URL=http://host:port" >&2
+  exit 1
+fi
+before=$(curl -s -m 60 "$KG_URL/traceability/stats" | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d["nodes"]["events"])' 2>/dev/null || echo "unknown")
 echo "wiping graph ($before events) ..."
-curl -sf -X DELETE "$KG_URL/traceability/graph" >/dev/null
+if ! curl -sf -m 600 -X DELETE "$KG_URL/traceability/graph" >/dev/null; then
+  echo "DELETE /traceability/graph failed: the service needs DEMO_MODE=true in its .env (restart after changing it)." >&2
+  exit 1
+fi
 
 if $SCENARIOS && [[ -d "$TRACE_SRC" ]]; then
   for s in clothing tuna battery tire; do
