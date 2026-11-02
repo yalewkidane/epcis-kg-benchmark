@@ -22,6 +22,7 @@ the top (`EPCIS_URL`, `KG_URL` are as seen **from the agent**, not from your lap
 | Experiment | Script | Optional resource | Constants |
 |---|---|---|---|
 | E1 simple push / E6 | `EpcisCapture.groovy` | `documents.json` | `EPCIS_URL`, `SYNC`, `UNIQUE`, `DOCUMENTS_URL` |
+| E1-max maximal event push | `EpcisCaptureMax.groovy` | none (generated) | `EPCIS_URL`, `EPCS` |
 | E2 simple get | `EpcisGet.groovy` | `ids.json` (for `byEpc`) | `EPCIS_URL`, `QUERY` |
 | E3 EPCIS traceability chain | `EpcisTrace.groovy` | `ids.json` | `EPCIS_URL`, `MATCH_PARAMS`, `MAX_DEPTH` |
 | E4 KG capture | `KgCapture.groovy` | `documents.json` | `KG_URL`, `QUEUE`, `UNIQUE`, `DOCUMENTS_URL` |
