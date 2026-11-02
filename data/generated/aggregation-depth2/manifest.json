@@ -1,0 +1,12 @@
+{
+  "products": 30,
+  "depth": 2,
+  "kind": "aggregation",
+  "out": "/home/yaleth/Documents/workbench/dkg/evaluation/data/generated",
+  "prefix": "0880002694",
+  "seed": 7,
+  "start": "2026-01-01T08:00:00Z",
+  "eventsPerProduct": 7,
+  "totalEvents": 210,
+  "generatedAt": "2026-10-29T05:01:28.851Z"
+}

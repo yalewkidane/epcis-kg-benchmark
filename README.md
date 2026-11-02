@@ -157,3 +157,14 @@ same host with 50 users: `MATCH_anyEPC` went from 720 req/s (1 process, no index
 
 Use nGrinder for continuity with the published tables and distributed load; use k6 for
 percentiles, the open model, E3 chains and automation.
+
+## Repository contents and license
+
+The generated reference datasets (`data/generated/aggregation-depth0`, `-depth2`: 30
+products each, seed 7) are committed so that published numbers can be reproduced on the
+exact same input; `data/generate-dataset.js` recreates or extends them. Results of your own
+runs go to `results/<run>/` and are not committed, except the report template.
+
+Licensed under the Apache License 2.0, see [LICENSE](LICENSE). Source of the systems
+measured in the reference runs: https://github.com/yalewkidane/epcisV2 (EPCIS 2.0
+repository) and the traceability knowledge graph of the same workbench.

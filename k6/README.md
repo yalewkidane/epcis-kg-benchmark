@@ -47,7 +47,7 @@ If the summary reports `DROPPED=…`, the open model could not keep the arrival 
 Examples:
 
 ```sh
-cd evaluation/data && node generate-dataset.js --products 3000 --depth 2 && cd ../k6
+cd epcis-kg-benchmark/data && node generate-dataset.js --products 3000 --depth 2 && cd ../k6
 
 # populate both systems through the repository (also E1); wait for the graph to catch up
 k6 run -e DATA=../data/generated/aggregation-depth2/documents.json -e MODE=closed -e VUS=10 -e DURATION=5m epcis-capture.js

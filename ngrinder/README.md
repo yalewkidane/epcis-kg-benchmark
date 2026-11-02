@@ -38,7 +38,7 @@ and serve the generated folder over HTTP on the server instead, then set `IDS_UR
 script:
 
 ```sh
-cd evaluation/data/generated && python3 -m http.server 8000      # on the server
+cd epcis-kg-benchmark/data/generated && python3 -m http.server 8000      # on the server
 # in the script: static final String IDS_URL = "http://localhost:8000/aggregation-depth2/ids.json"
 ```
 
@@ -67,7 +67,7 @@ roughly 1.3 M events (7 per depth-2 document). Reset to the known state between 
 and before any query run:
 
 ```sh
-cd evaluation/scripts && ./reset-graph.sh      # wipes the graph, reloads the demo scenarios and ../data/generated/*
+cd epcis-kg-benchmark/scripts && ./reset-graph.sh      # wipes the graph, reloads the demo scenarios and ../data/generated/*
 ```
 
 The same applies to `EpcisCapture.groovy` on the EPCIS side: the repository keeps every

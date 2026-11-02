@@ -1,4 +1,3 @@
-data/generated/
 results/*
 !results/TEMPLATE.md
 !results/.gitkeep

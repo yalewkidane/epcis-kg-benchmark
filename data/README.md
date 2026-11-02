@@ -23,7 +23,7 @@ populate the graph directly without measuring, with the traceability loader:
 ```sh
 # from traceability/src
 node -e '
-const docs = require("../../evaluation/data/generated/aggregation-depth2/documents.json");
+const docs = require("../../epcis-kg-benchmark/data/generated/aggregation-depth2/documents.json");
 const { ingestEvents } = require("./graph/ingest");
 (async () => { for (const d of docs) await ingestEvents(d, { source: "evaluation", log: { log() {} } }); process.exit(0); })();'
 ```
