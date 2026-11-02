@@ -32,7 +32,7 @@ import groovy.json.JsonOutput
 class EpcisCapture {
 
     static final String EPCIS_URL = "http://localhost:7080/epcis/v2"
-    static final boolean SYNC = false
+    static final boolean SYNC = true
     // true: every test captures a new document (unique identifiers and eventIDs) – see header
     static final boolean UNIQUE = true
     // Optional: URL of a documents.json to download instead of uploading resources/documents.json
@@ -131,7 +131,10 @@ class EpcisCapture {
         }
         HTTPResponse response
         if (SYNC) {
-            response = request.POST(EPCIS_URL + "/events", JsonOutput.toJson(doc.epcisBody.eventList[0]).bytes)
+            // POST /events takes one event; the validator requires the document's @context on it
+            Map event = ["@context": doc["@context"]]
+            event.putAll(doc.epcisBody.eventList[0])
+            response = request.POST(EPCIS_URL + "/events", JsonOutput.toJson(event).bytes)
         } else {
             response = request.POST(EPCIS_URL + "/capture", JsonOutput.toJson(doc).bytes)
         }

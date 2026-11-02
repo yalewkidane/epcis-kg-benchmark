@@ -35,7 +35,9 @@ export default function () {
   const started = Date.now();
   let res;
   if (SYNC) {
-    res = http.post(`${EPCIS_URL}/events`, JSON.stringify(doc.epcisBody.eventList[0]), { headers: EPCIS_HEADERS, tags: { name: 'POST /events' }, timeout: '60s' });
+    // POST /events takes one event; the validator requires the document's @context on it
+    const event = { '@context': doc['@context'], ...doc.epcisBody.eventList[0] };
+    res = http.post(`${EPCIS_URL}/events`, JSON.stringify(event), { headers: EPCIS_HEADERS, tags: { name: 'POST /events' }, timeout: '60s' });
   } else {
     res = http.post(`${EPCIS_URL}/capture`, JSON.stringify(doc), { headers: EPCIS_HEADERS, tags: { name: 'POST /capture' }, timeout: '60s' });
   }
