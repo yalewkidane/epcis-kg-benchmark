@@ -27,9 +27,9 @@ evaluation/
 | **E1** | Simple push | EPCIS alone | `POST /capture` with one document per request (`SYNC=true`: `POST /events` with one event) | `epcis-capture.js` / `EpcisCapture.groovy` |
 | **E1-max** | Maximal event push | EPCIS alone | `POST /capture` of one generated ObjectEvent with every standard field populated (quantities, business transactions, sources/destinations, two sensor elements with all report forms, ILMD, persistent disposition, certification, extensions; about 5 KB), identifiers never repeat; the worst-case capture cost. Default `SYNC=true`: `POST /events`, stored before the answer (the certified test item); `SYNC=false`: the event wrapped in a document to `POST /capture` | `EpcisCaptureMax.groovy` |
 | **E2** | Simple get | EPCIS alone | `GET /events` with one parameter: by identifier (`QUERY=byEpc`), latest events (`latest`), by event type (`byType`) | `epcis-get.js` / `EpcisGet.groovy` |
-| **E3** | Traceability query | EPCIS alone | the *chain* of `GET /events` calls needed to collect everything about an item through its re-identifications (packing, transformation), at depth 0 / 1 / 2 | `epcis-trace.js` / `EpcisTrace.groovy` |
+| **E3** | Traceability query | EPCIS alone | the *chain* of `GET /events` calls needed to collect everything about an item through its re-identifications (packing, transformation), at depth 0 to 3 | `epcis-trace.js` / `EpcisTrace.groovy` |
 | **E4** | KG capture | Knowledge graph alone | `POST /traceability/ingest` with one document per request (synchronous graph write; `QUEUE=true` for the queued path) | `kg-capture.js` / `KgCapture.groovy` |
-| **E5** | KG query | Knowledge graph alone | one `GET /traceability?id=…` at depth 0 / 1 / 2 | `kg-trace.js` / `KgTrace.groovy` |
+| **E5** | KG query | Knowledge graph alone | one `GET /traceability?id=…` at depth 0 to 3 | `kg-trace.js` / `KgTrace.groovy` |
 | **E6** | Capture under subscription load | EPCIS + graph | E1 repeated with no subscription, MQTT, webhook, websocket | `epcis-capture.js` with `STRATEGY=…` |
 | **E7** | Capture-to-graph lag | graph | time from `recordTime` (set by the repository) to ingestion in the graph | `scripts/lag.sh` |
 
