@@ -12,7 +12,7 @@ Meets Knowledge Graphs* (Section IV, Table I, Figs. 6–7).
 ```
 evaluation/
   README.md            methodology, metrics, experiments, procedure
-  data/                synthetic dataset generator (products at lineage depth 0, 1, 2)
+  data/                synthetic dataset generator (products at lineage depth 0 to 3)
   k6/                  k6 scripts, one per experiment (open or closed load model)
   ngrinder/            nGrinder scripts, one per experiment (closed model, distributed agents),
                        and a compose file for a controller + agent with persistent state
@@ -82,9 +82,10 @@ matches `epcList`, `childEPCs` and `parentID`. Transformation outputs are found 
 
 ## 5. Test data
 
-`data/generate-dataset.js` creates *N* independent products at depth 0, 1 or 2
-(aggregation or transformation chains). Products never share identifiers, so each query
-has a constant answer size. See `data/README.md`.
+`data/generate-dataset.js` creates *N* independent products at depth 0 to 3 (aggregation
+chains item → case → pallet → container, or transformation chains); a product has 3, 5, 7
+or 9 events. Products never share identifiers, so each query has a constant answer size.
+See `data/README.md`.
 
 ## 6. Procedure
 
@@ -169,8 +170,8 @@ percentiles, the open model, E3 chains and automation.
 
 ## Repository contents and license
 
-The generated reference datasets (`data/generated/aggregation-depth0`, `-depth2`: 30
-products each, seed 7) are committed so that published numbers can be reproduced on the
+The generated reference datasets (`data/generated/aggregation-depth0`, `-depth2`, `-depth3`:
+30 products each, seed 7) are committed so that published numbers can be reproduced on the
 exact same input; `data/generate-dataset.js` recreates or extends them. Results of your own
 runs go to `results/<run>/` and are not committed, except the report template.
 

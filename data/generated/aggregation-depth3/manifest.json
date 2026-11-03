@@ -1,0 +1,12 @@
+{
+  "products": 30,
+  "depth": 3,
+  "kind": "aggregation",
+  "out": "/home/yaleth/Documents/workbench/dkg/epcis-kg-benchmark/data/generated",
+  "prefix": "0880002694",
+  "seed": 7,
+  "start": "2026-01-01T08:00:00Z",
+  "eventsPerProduct": 9,
+  "totalEvents": 270,
+  "generatedAt": "2026-11-03T01:15:56.322Z"
+}
